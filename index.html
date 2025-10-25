@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Snake Online</title>
+<style>
+canvas { background: black; display: block; margin: 0 auto; }
+
+h1 {
+    color:aliceblue
+    
+}
+
+</style>
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+</head>
+<body>
+    <h1>made by ShadowRoot17</h1>
+<canvas id="game" width="800" height="600"></canvas>
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const GRID_SIZE = 20;
+
+const socket = io();
+
+let pid = "";
+let gameState = {snakes: {}, food: [0,0], scores: {}, game_over: false};
+
+socket.on("player_id", (id) => {
+    pid = id;
+    console.log("You are", pid);
+});
+
+socket.on("state", (state) => {
+    gameState = state;
+    draw();
+});
+
+document.addEventListener("keydown", (e) => {
+    let dir = null;
+    if (e.key === "ArrowUp") dir = "UP";
+    else if (e.key === "ArrowDown") dir = "DOWN";
+    else if (e.key === "ArrowLeft") dir = "LEFT";
+    else if (e.key === "ArrowRight") dir = "RIGHT";
+    else if (e.key === "w") dir = "UP";
+    else if (e.key === "s") dir = "DOWN";
+    else if (e.key === "d") dir = "RIGHT";
+    else if (e.key === "a") dir = "LEFT";
+    else if (e.key === "W") dir = "UP";
+    else if (e.key === "S") dir = "DOWN";
+    else if (e.key === "D") dir = "RIGHT";
+    else if (e.key === "A") dir = "LEFT";
+
+    if (dir) socket.emit("move", { pid, direction: dir });
+});
+
+
+function draw() {
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+
+    // draw food
+    ctx.fillStyle = "red";
+    ctx.fillRect(gameState.food[0], gameState.food[1], GRID_SIZE, GRID_SIZE);
+
+    // draw snakes
+    for(let key in gameState.snakes){
+        ctx.fillStyle = key==="P1"?"green":"blue";
+        gameState.snakes[key].forEach(seg => {
+            ctx.fillRect(seg[0], seg[1], GRID_SIZE, GRID_SIZE);
+        });
+    }
+
+    // draw scores
+    ctx.fillStyle = "white";
+    ctx.font = "20px Arial";
+    ctx.fillText(`P1: ${gameState.scores.P1 || 0}  P2: ${gameState.scores.P2 || 0}`, 10, 20);
+
+    // game over
+    if(gameState.game_over){
+        ctx.fillStyle = "red";
+        ctx.font = "40px Arial";
+        ctx.fillText("GAME OVER", canvas.width/2-100, canvas.height/2);
+    }
+}
+</script>
+</body>
+</html>
